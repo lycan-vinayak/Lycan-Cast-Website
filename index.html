@@ -767,93 +767,7 @@ button { font-family: inherit; cursor: pointer; }
 /* content floats above the sky; tinted sections go translucent so you fly through */
 main, .footer { position: relative; z-index: 1; }
 
-/* altitude instrument — right gutter, functional scrollspy */
-#alt {
-    position: fixed;
-    top: 0;
-    right: max(10px, calc((100vw - 1120px) / 2 - 88px));
-    width: 78px;
-    height: 100vh;
-    z-index: 30;
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-}
-.alt-track {
-    position: relative;
-    width: 2px;
-    margin: 84px 0 70px;
-    background: rgba(26,155,215,.16);
-}
-/* fine tick marks along the tape */
-.alt-track::before {
-    content: "";
-    position: absolute;
-    left: -4px;
-    top: 0; bottom: 0;
-    width: 10px;
-    background-image: repeating-linear-gradient(
-        to bottom,
-        rgba(26,155,215,.30) 0 2px,
-        transparent 2px 22px);
-}
-.alt-chip {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 13px;
-    border-radius: 99px;
-    background: #0e1b36;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    font-weight: 700;
-    color: #fff;
-    white-space: nowrap;
-    box-shadow: 0 10px 26px -10px rgba(13,109,163,.55);
-    will-change: top;
-}
-.alt-chip small { font-size: 9px; letter-spacing: .12em; color: rgba(255,255,255,.6); }
-.alt-chip svg { color: var(--cyan); }
-.alt-chip .land { display: none; font-size: 9.5px; letter-spacing: .1em; color: var(--live); }
-.alt-chip.landed svg { display: none; }
-.alt-chip.landed .land { display: inline; }
-.alt-wp {
-    position: absolute;
-    left: 50%;
-    width: 10px; height: 10px;
-    transform: translate(-50%, -50%);
-    border: 2px solid var(--cyan-deep);
-    border-radius: 50%;
-    background: #fff;
-    padding: 0;
-    cursor: pointer;
-    pointer-events: auto;
-    transition: background .25s, transform .25s;
-}
-.alt-wp:hover { transform: translate(-50%, -50%) scale(1.35); }
-.alt-wp.past { background: var(--cyan-deep); }
-.alt-wp::after {
-    content: attr(data-label);
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 4px 10px;
-    border-radius: 8px;
-    background: #0e1b36;
-    color: #fff;
-    font: 600 11px var(--sans);
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s;
-}
-.alt-wp:hover::after, .alt-wp:focus-visible::after { opacity: 1; }
-@media (max-width: 1279px) { #alt { display: none; } }
+/* (right-gutter instrument removed by design — sky parallax only) */
 
 /* ─────────────── Reveal — animation 3 ─────────────── */
 .reveal {
@@ -1322,17 +1236,6 @@ main, .footer { position: relative; z-index: 1; }
     <div class="cl l3"><i></i><i></i><i></i></div>
 </div>
 
-<!-- THE DESCENT · layer 2 — altitude instrument + section waypoints (wide screens) -->
-<nav id="alt" aria-label="Page position">
-    <div class="alt-track" id="altTrack">
-        <div class="alt-chip" id="altChip">
-            <b id="altVal">142</b><small>M</small>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7"/></svg>
-            <span class="land">&#10003; LANDED</span>
-        </div>
-    </div>
-</nav>
-
 <script>
 (function () {
     "use strict";
@@ -1435,88 +1338,34 @@ main, .footer { position: relative; z-index: 1; }
         }, 1000);
     }
 
-    /* ── THE DESCENT — parallax sky + altitude instrument ── */
+    /* ── parallax sky — three cloud strata drift past at different speeds ── */
     var skyLayers = [
         { el: document.querySelector(".cl.l1"), f: 0.06 },
         { el: document.querySelector(".cl.l2"), f: 0.13 },
         { el: document.querySelector(".cl.l3"), f: 0.24 }
     ];
-    var altChip  = document.getElementById("altChip");
-    var altVal   = document.getElementById("altVal");
-    var altTrack = document.getElementById("altTrack");
-    var MAX_ALT  = 142;
-
-    /* waypoint dots: one per section, clickable, lights up when passed */
-    var wpDefs = [
-        { id: null,       label: "Top"          },
-        { id: "features", label: "Features"     },
-        { id: "how",      label: "How it works" },
-        { id: "privacy",  label: "Privacy"      },
-        { id: "specs",    label: "Specs"        },
-        { id: "faq",      label: "FAQ"          },
-        { id: "get",      label: "Get the app"  }
-    ];
-    var wps = [];
-    function maxScroll() {
-        return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    }
-    function placeWaypoints() {
-        if (!altTrack) return;
-        var max = maxScroll();
-        wps.forEach(function (w) {
-            var top = w.id ? document.getElementById(w.id) : null;
-            w.p = top
-                ? Math.min(1, (top.getBoundingClientRect().top + window.scrollY) / max)
-                : 0;
-            w.btn.style.top = (w.p * 100) + "%";
-        });
-    }
-    if (altTrack) {
-        wpDefs.forEach(function (def) {
-            var b = document.createElement("button");
-            b.className = "alt-wp";
-            b.setAttribute("data-label", def.label);
-            b.setAttribute("aria-label", "Go to " + def.label);
-            b.addEventListener("click", function () {
-                if (!def.id) { window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" }); return; }
-                var t = document.getElementById(def.id);
-                if (t) t.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
-            });
-            altTrack.appendChild(b);
-            wps.push({ id: def.id, btn: b, p: 0 });
-        });
-        placeWaypoints();
-    }
-
-    var sTarget = 0, sCur = -0.001, sRaf = null;
-    function descentFrame() {
-        sCur += (sTarget - sCur) * 0.09;
-        var max = maxScroll();
-        /* clouds rise past you at three speeds = depth */
-        if (!reduce) {
+    if (!reduce && skyLayers[0].el) {
+        var sTarget = 0, sCur = -0.001, sRaf = null;
+        var maxScroll = function () {
+            return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        };
+        var skyFrame = function () {
+            sCur += (sTarget - sCur) * 0.09;
+            var max = maxScroll();
             skyLayers.forEach(function (l) {
                 if (l.el) l.el.style.transform = "translate3d(0," + (-sCur * max * l.f).toFixed(1) + "px,0)";
             });
-        }
-        /* altitude chip rides the tape, value counts down to touchdown */
-        if (altChip) {
-            altChip.style.top = (sCur * 100) + "%";
-            var alt = Math.max(0, Math.round((1 - sCur) * MAX_ALT));
-            altVal.textContent = alt;
-            altChip.classList.toggle("landed", sCur > 0.985);
-            wps.forEach(function (w) { w.btn.classList.toggle("past", w.p <= sCur + 0.004); });
-        }
-        if (Math.abs(sTarget - sCur) > 0.0006) { sRaf = requestAnimationFrame(descentFrame); }
-        else { sRaf = null; }
+            if (Math.abs(sTarget - sCur) > 0.0006) { sRaf = requestAnimationFrame(skyFrame); }
+            else { sRaf = null; }
+        };
+        var onSkyScroll = function () {
+            sTarget = window.scrollY / maxScroll();
+            if (!sRaf) sRaf = requestAnimationFrame(skyFrame);
+        };
+        window.addEventListener("scroll", onSkyScroll, { passive: true });
+        window.addEventListener("resize", onSkyScroll, { passive: true });
+        onSkyScroll();
     }
-    function sKick() { if (!sRaf) sRaf = requestAnimationFrame(descentFrame); }
-    function onDescentScroll() {
-        sTarget = window.scrollY / maxScroll();
-        sKick();
-    }
-    window.addEventListener("scroll", onDescentScroll, { passive: true });
-    window.addEventListener("resize", function () { placeWaypoints(); onDescentScroll(); }, { passive: true });
-    onDescentScroll();
 })();
 </script>
 
