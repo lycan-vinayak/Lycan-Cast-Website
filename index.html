@@ -66,7 +66,8 @@ button { font-family: inherit; cursor: pointer; }
     color: var(--brand-strong);
 }
 .section { padding: clamp(64px, 9vw, 110px) 0; }
-.section.soft { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+/* translucent so the parallax sky reads through */
+.section.soft { background: rgba(246,249,252,.72); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .sec-head { max-width: 580px; margin-bottom: clamp(34px, 5vw, 54px); }
 .sec-head h2 {
     font-size: clamp(1.7rem, 3.6vw, 2.5rem);
@@ -710,7 +711,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ─────────────── Footer ─────────────── */
-.footer { border-top: 1px solid var(--line); padding: 34px 0 42px; background: var(--bg-soft); }
+.footer { border-top: 1px solid var(--line); padding: 34px 0 42px; background: rgba(246,249,252,.72); }
 .foot-in {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
     gap: 14px 28px;
@@ -721,38 +722,138 @@ button { font-family: inherit; cursor: pointer; }
 .foot-links a:hover { color: var(--ink); }
 .foot-note { width: 100%; margin-top: 6px; font-size: .78rem; color: var(--ink-3); }
 
-/* ─────────────── Scroll companion: drone escorts you down the page ─────────────── */
-#flight {
+/* ═══════════ THE DESCENT — page-long flight from altitude to landing ═══════════ */
+
+/* parallax sky: three cloud strata behind everything */
+#sky {
+    position: fixed;
+    inset: -12% 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+.cl { position: absolute; inset: 0; will-change: transform; }
+.cl i {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(closest-side,
+        rgba(214,233,252,.95),
+        rgba(224,242,254,.55) 55%,
+        rgba(255,255,255,0) 74%);
+}
+/* far stratus — small, faint, slowest */
+.cl.l1 i { opacity: .5; }
+.cl.l1 i:nth-child(1) { width: 30vw; height: 11vw; left:  6%; top: 16%; }
+.cl.l1 i:nth-child(2) { width: 24vw; height:  9vw; left: 58%; top: 42%; }
+.cl.l1 i:nth-child(3) { width: 28vw; height: 10vw; left: 24%; top: 74%; }
+/* mid cumulus */
+.cl.l2 i { opacity: .55; }
+.cl.l2 i:nth-child(1) { width: 42vw; height: 15vw; left: -8%; top: 30%; }
+.cl.l2 i:nth-child(2) { width: 36vw; height: 13vw; left: 64%; top:  8%; }
+.cl.l2 i:nth-child(3) { width: 40vw; height: 14vw; left: 38%; top: 58%; }
+.cl.l2 i:nth-child(4) { width: 34vw; height: 12vw; left:  2%; top: 88%; }
+/* near layer — big, soft-blurred, fastest */
+.cl.l3 { filter: blur(9px); }
+.cl.l3 i { opacity: .6; }
+.cl.l3 i:nth-child(1) { width: 56vw; height: 19vw; left: 52%; top: 24%; }
+.cl.l3 i:nth-child(2) { width: 62vw; height: 21vw; left: -14%; top: 52%; }
+.cl.l3 i:nth-child(3) { width: 50vw; height: 17vw; left: 30%; top: 86%; }
+/* slow lateral drift, layer-desynced */
+.cl.l1 { animation: drift 110s ease-in-out infinite alternate; }
+.cl.l2 { animation: drift  85s ease-in-out infinite alternate-reverse; }
+.cl.l3 { animation: drift  65s ease-in-out infinite alternate; }
+@keyframes drift { from { margin-left: -2.5vw; } to { margin-left: 2.5vw; } }
+
+/* content floats above the sky; tinted sections go translucent so you fly through */
+main, .footer { position: relative; z-index: 1; }
+
+/* altitude instrument — right gutter, functional scrollspy */
+#alt {
     position: fixed;
     top: 0;
-    right: max(10px, calc((100vw - 1120px) / 2 - 82px));
-    width: 66px;
+    right: max(10px, calc((100vw - 1120px) / 2 - 88px));
+    width: 78px;
     height: 100vh;
     z-index: 30;
+    display: flex;
+    justify-content: center;
     pointer-events: none;
 }
-#flight::before {
+.alt-track {
+    position: relative;
+    width: 2px;
+    margin: 84px 0 70px;
+    background: rgba(26,155,215,.16);
+}
+/* fine tick marks along the tape */
+.alt-track::before {
     content: "";
     position: absolute;
-    left: 50%;
+    left: -4px;
     top: 0; bottom: 0;
-    border-left: 2px dashed rgba(26,155,215,.20);
+    width: 10px;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(26,155,215,.30) 0 2px,
+        transparent 2px 22px);
 }
-.drone {
+.alt-chip {
     position: absolute;
-    left: 0; top: 0;
-    will-change: transform;
-    filter: drop-shadow(0 6px 12px rgba(13,109,163,.35));
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 99px;
+    background: #0e1b36;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    box-shadow: 0 10px 26px -10px rgba(13,109,163,.55);
+    will-change: top;
 }
-.prop {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: propspin .18s linear infinite;
+.alt-chip small { font-size: 9px; letter-spacing: .12em; color: rgba(255,255,255,.6); }
+.alt-chip svg { color: var(--cyan); }
+.alt-chip .land { display: none; font-size: 9.5px; letter-spacing: .1em; color: var(--live); }
+.alt-chip.landed svg { display: none; }
+.alt-chip.landed .land { display: inline; }
+.alt-wp {
+    position: absolute;
+    left: 50%;
+    width: 10px; height: 10px;
+    transform: translate(-50%, -50%);
+    border: 2px solid var(--cyan-deep);
+    border-radius: 50%;
+    background: #fff;
+    padding: 0;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background .25s, transform .25s;
 }
-@keyframes propspin { to { transform: rotate(360deg); } }
-/* gutter too small / touch devices / reduced motion → no drone */
-@media (max-width: 1279px) { #flight { display: none; } }
-@media (prefers-reduced-motion: reduce) { #flight { display: none; } }
+.alt-wp:hover { transform: translate(-50%, -50%) scale(1.35); }
+.alt-wp.past { background: var(--cyan-deep); }
+.alt-wp::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: #0e1b36;
+    color: #fff;
+    font: 600 11px var(--sans);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+}
+.alt-wp:hover::after, .alt-wp:focus-visible::after { opacity: 1; }
+@media (max-width: 1279px) { #alt { display: none; } }
 
 /* ─────────────── Reveal — animation 3 ─────────────── */
 .reveal {
@@ -1070,7 +1171,7 @@ button { font-family: inherit; cursor: pointer; }
 </section>
 
 <!-- ═════════ How it works ═════════ -->
-<section class="section">
+<section id="how" class="section">
     <div class="wrap">
         <header class="sec-head">
             <p class="eyebrow">Workflow</p>
@@ -1099,7 +1200,7 @@ button { font-family: inherit; cursor: pointer; }
 </section>
 
 <!-- ═════════ Privacy ═════════ -->
-<section class="section soft privacy">
+<section id="privacy" class="section soft privacy">
     <div class="wrap reveal">
         <p class="eyebrow">Privacy</p>
         <h2>Privacy isn't a setting.<br>It's the architecture.</h2>
@@ -1214,18 +1315,23 @@ button { font-family: inherit; cursor: pointer; }
     </div>
 </footer>
 
-<!-- scroll companion — a drone flies down the right gutter as you scroll (wide screens only) -->
-<div id="flight" aria-hidden="true">
-    <svg class="drone" id="drone" width="66" height="66" viewBox="0 0 66 66" fill="none">
-        <path d="M14 14 52 52 M52 14 14 52" stroke="#0a3b58" stroke-width="3" stroke-linecap="round"/>
-        <g class="prop"><ellipse cx="14" cy="14" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="14" cy="14" r="2.4" fill="#0a3b58"/></g>
-        <g class="prop"><ellipse cx="52" cy="14" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="52" cy="14" r="2.4" fill="#0a3b58"/></g>
-        <g class="prop"><ellipse cx="14" cy="52" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="14" cy="52" r="2.4" fill="#0a3b58"/></g>
-        <g class="prop"><ellipse cx="52" cy="52" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="52" cy="52" r="2.4" fill="#0a3b58"/></g>
-        <rect x="26" y="22" width="14" height="22" rx="6" fill="#0c2438"/>
-        <circle cx="33" cy="41" r="2.6" fill="#38d9ff"/>
-    </svg>
+<!-- THE DESCENT · layer 1 — parallax sky behind the whole page -->
+<div id="sky" aria-hidden="true">
+    <div class="cl l1"><i></i><i></i><i></i></div>
+    <div class="cl l2"><i></i><i></i><i></i><i></i></div>
+    <div class="cl l3"><i></i><i></i><i></i></div>
 </div>
+
+<!-- THE DESCENT · layer 2 — altitude instrument + section waypoints (wide screens) -->
+<nav id="alt" aria-label="Page position">
+    <div class="alt-track" id="altTrack">
+        <div class="alt-chip" id="altChip">
+            <b id="altVal">142</b><small>M</small>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7"/></svg>
+            <span class="land">&#10003; LANDED</span>
+        </div>
+    </div>
+</nav>
 
 <script>
 (function () {
@@ -1329,32 +1435,88 @@ button { font-family: inherit; cursor: pointer; }
         }, 1000);
     }
 
-    /* scroll companion — drone descends the gutter with the reader */
-    var droneEl = document.getElementById("drone");
-    if (droneEl && !reduce) {
-        var dTarget = 0, dCur = -0.001, dRaf = null;
-        var dLoop = function () {
-            dCur += (dTarget - dCur) * 0.08;
-            var travel = window.innerHeight - 120;
-            var y = 26 + dCur * travel;
-            var x = Math.sin(dCur * Math.PI * 2.4) * 14;      /* gentle S-curve sway   */
-            var tilt = Math.cos(dCur * Math.PI * 2.4) * 10;   /* bank into each turn   */
-            droneEl.style.transform =
-                "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)" +
-                " rotate(" + tilt.toFixed(1) + "deg)";
-            if (Math.abs(dTarget - dCur) > 0.0008) { dRaf = requestAnimationFrame(dLoop); }
-            else { dRaf = null; }
-        };
-        var dKick = function () { if (!dRaf) dRaf = requestAnimationFrame(dLoop); };
-        var dScroll = function () {
-            var max = document.documentElement.scrollHeight - window.innerHeight;
-            dTarget = max > 0 ? window.scrollY / max : 0;
-            dKick();
-        };
-        window.addEventListener("scroll", dScroll, { passive: true });
-        window.addEventListener("resize", dScroll, { passive: true });
-        dScroll();
+    /* ── THE DESCENT — parallax sky + altitude instrument ── */
+    var skyLayers = [
+        { el: document.querySelector(".cl.l1"), f: 0.06 },
+        { el: document.querySelector(".cl.l2"), f: 0.13 },
+        { el: document.querySelector(".cl.l3"), f: 0.24 }
+    ];
+    var altChip  = document.getElementById("altChip");
+    var altVal   = document.getElementById("altVal");
+    var altTrack = document.getElementById("altTrack");
+    var MAX_ALT  = 142;
+
+    /* waypoint dots: one per section, clickable, lights up when passed */
+    var wpDefs = [
+        { id: null,       label: "Top"          },
+        { id: "features", label: "Features"     },
+        { id: "how",      label: "How it works" },
+        { id: "privacy",  label: "Privacy"      },
+        { id: "specs",    label: "Specs"        },
+        { id: "faq",      label: "FAQ"          },
+        { id: "get",      label: "Get the app"  }
+    ];
+    var wps = [];
+    function maxScroll() {
+        return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     }
+    function placeWaypoints() {
+        if (!altTrack) return;
+        var max = maxScroll();
+        wps.forEach(function (w) {
+            var top = w.id ? document.getElementById(w.id) : null;
+            w.p = top
+                ? Math.min(1, (top.getBoundingClientRect().top + window.scrollY) / max)
+                : 0;
+            w.btn.style.top = (w.p * 100) + "%";
+        });
+    }
+    if (altTrack) {
+        wpDefs.forEach(function (def) {
+            var b = document.createElement("button");
+            b.className = "alt-wp";
+            b.setAttribute("data-label", def.label);
+            b.setAttribute("aria-label", "Go to " + def.label);
+            b.addEventListener("click", function () {
+                if (!def.id) { window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" }); return; }
+                var t = document.getElementById(def.id);
+                if (t) t.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+            });
+            altTrack.appendChild(b);
+            wps.push({ id: def.id, btn: b, p: 0 });
+        });
+        placeWaypoints();
+    }
+
+    var sTarget = 0, sCur = -0.001, sRaf = null;
+    function descentFrame() {
+        sCur += (sTarget - sCur) * 0.09;
+        var max = maxScroll();
+        /* clouds rise past you at three speeds = depth */
+        if (!reduce) {
+            skyLayers.forEach(function (l) {
+                if (l.el) l.el.style.transform = "translate3d(0," + (-sCur * max * l.f).toFixed(1) + "px,0)";
+            });
+        }
+        /* altitude chip rides the tape, value counts down to touchdown */
+        if (altChip) {
+            altChip.style.top = (sCur * 100) + "%";
+            var alt = Math.max(0, Math.round((1 - sCur) * MAX_ALT));
+            altVal.textContent = alt;
+            altChip.classList.toggle("landed", sCur > 0.985);
+            wps.forEach(function (w) { w.btn.classList.toggle("past", w.p <= sCur + 0.004); });
+        }
+        if (Math.abs(sTarget - sCur) > 0.0006) { sRaf = requestAnimationFrame(descentFrame); }
+        else { sRaf = null; }
+    }
+    function sKick() { if (!sRaf) sRaf = requestAnimationFrame(descentFrame); }
+    function onDescentScroll() {
+        sTarget = window.scrollY / maxScroll();
+        sKick();
+    }
+    window.addEventListener("scroll", onDescentScroll, { passive: true });
+    window.addEventListener("resize", function () { placeWaypoints(); onDescentScroll(); }, { passive: true });
+    onDescentScroll();
 })();
 </script>
 
