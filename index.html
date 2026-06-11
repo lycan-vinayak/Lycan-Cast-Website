@@ -31,6 +31,7 @@
     --brand-deep:   #0369a1;
     --cyan-light:   #29c5f6;
     --cyan-deep:    #1a9bd7;
+    --cyan:         #38d9ff;
     --live:         #00e676;
     --rec:          #ff3d57;
     --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -120,6 +121,9 @@ button { font-family: inherit; cursor: pointer; }
 .btn.small { padding: 9px 18px; font-size: .88rem; }
 .btn svg { flex: none; }
 .cta-cap { display: block; margin-top: 14px; font-size: .85rem; color: var(--ink-3); }
+/* button + caption as one unit: caption centres under the button width */
+.cta-stack { display: inline-flex; flex-direction: column; align-items: center; }
+.cta-stack .cta-cap { margin-top: 12px; }
 
 /* ─────────────── Hero (left-aligned, 2-col) ─────────────── */
 .hero { padding: clamp(56px, 8vw, 96px) 0 clamp(48px, 7vw, 84px); overflow: hidden; }
@@ -573,7 +577,7 @@ button { font-family: inherit; cursor: pointer; }
     line-height: 1.3;
 }
 .hud-chip b { font-family: var(--mono); font-size: .92rem; color: #e9eef7; }
-.hud-chip small { font-size: .56rem; letter-spacing: .14em; color: rgba(255,255,255,.45); }
+.hud-chip small { font-size: .56rem; letter-spacing: .14em; color: rgba(255,255,255,.62); }
 
 /* ── tile ⑥ storage: wide strip ── */
 .b-store {
@@ -715,7 +719,40 @@ button { font-family: inherit; cursor: pointer; }
 .foot-links { display: flex; gap: 24px; }
 .foot-links a { color: var(--ink-3); text-decoration: none; transition: color .2s; }
 .foot-links a:hover { color: var(--ink); }
-.foot-note { width: 100%; margin-top: 6px; font-size: .78rem; color: #94a3b8; }
+.foot-note { width: 100%; margin-top: 6px; font-size: .78rem; color: var(--ink-3); }
+
+/* ─────────────── Scroll companion: drone escorts you down the page ─────────────── */
+#flight {
+    position: fixed;
+    top: 0;
+    right: max(10px, calc((100vw - 1120px) / 2 - 82px));
+    width: 66px;
+    height: 100vh;
+    z-index: 30;
+    pointer-events: none;
+}
+#flight::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0; bottom: 0;
+    border-left: 2px dashed rgba(26,155,215,.20);
+}
+.drone {
+    position: absolute;
+    left: 0; top: 0;
+    will-change: transform;
+    filter: drop-shadow(0 6px 12px rgba(13,109,163,.35));
+}
+.prop {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: propspin .18s linear infinite;
+}
+@keyframes propspin { to { transform: rotate(360deg); } }
+/* gutter too small / touch devices / reduced motion → no drone */
+@media (max-width: 1279px) { #flight { display: none; } }
+@media (prefers-reduced-motion: reduce) { #flight { display: none; } }
 
 /* ─────────────── Reveal — animation 3 ─────────────── */
 .reveal {
@@ -815,7 +852,7 @@ button { font-family: inherit; cursor: pointer; }
                 Lycan Cast turns your Android phone into a window on your
                 drone's camera — instant, beautiful, and completely private.
             </p>
-            <div class="rise d4">
+            <div class="rise d4 cta-stack">
                 <!-- Replace href with the Play Store link once live:
                      https://play.google.com/store/apps/details?id=com.lycanaerospace.lycancast -->
                 <a class="btn" href="#" title="Coming soon to Google Play">
@@ -1177,6 +1214,19 @@ button { font-family: inherit; cursor: pointer; }
     </div>
 </footer>
 
+<!-- scroll companion — a drone flies down the right gutter as you scroll (wide screens only) -->
+<div id="flight" aria-hidden="true">
+    <svg class="drone" id="drone" width="66" height="66" viewBox="0 0 66 66" fill="none">
+        <path d="M14 14 52 52 M52 14 14 52" stroke="#0a3b58" stroke-width="3" stroke-linecap="round"/>
+        <g class="prop"><ellipse cx="14" cy="14" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="14" cy="14" r="2.4" fill="#0a3b58"/></g>
+        <g class="prop"><ellipse cx="52" cy="14" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="52" cy="14" r="2.4" fill="#0a3b58"/></g>
+        <g class="prop"><ellipse cx="14" cy="52" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="14" cy="52" r="2.4" fill="#0a3b58"/></g>
+        <g class="prop"><ellipse cx="52" cy="52" rx="10" ry="2.6" fill="rgba(26,155,215,.55)"/><circle cx="52" cy="52" r="2.4" fill="#0a3b58"/></g>
+        <rect x="26" y="22" width="14" height="22" rx="6" fill="#0c2438"/>
+        <circle cx="33" cy="41" r="2.6" fill="#38d9ff"/>
+    </svg>
+</div>
+
 <script>
 (function () {
     "use strict";
@@ -1277,6 +1327,33 @@ button { font-family: inherit; cursor: pointer; }
                 String(Math.floor(s / 60)).padStart(2, "0") + ":" +
                 String(s % 60).padStart(2, "0");
         }, 1000);
+    }
+
+    /* scroll companion — drone descends the gutter with the reader */
+    var droneEl = document.getElementById("drone");
+    if (droneEl && !reduce) {
+        var dTarget = 0, dCur = -0.001, dRaf = null;
+        var dLoop = function () {
+            dCur += (dTarget - dCur) * 0.08;
+            var travel = window.innerHeight - 120;
+            var y = 26 + dCur * travel;
+            var x = Math.sin(dCur * Math.PI * 2.4) * 14;      /* gentle S-curve sway   */
+            var tilt = Math.cos(dCur * Math.PI * 2.4) * 10;   /* bank into each turn   */
+            droneEl.style.transform =
+                "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)" +
+                " rotate(" + tilt.toFixed(1) + "deg)";
+            if (Math.abs(dTarget - dCur) > 0.0008) { dRaf = requestAnimationFrame(dLoop); }
+            else { dRaf = null; }
+        };
+        var dKick = function () { if (!dRaf) dRaf = requestAnimationFrame(dLoop); };
+        var dScroll = function () {
+            var max = document.documentElement.scrollHeight - window.innerHeight;
+            dTarget = max > 0 ? window.scrollY / max : 0;
+            dKick();
+        };
+        window.addEventListener("scroll", dScroll, { passive: true });
+        window.addEventListener("resize", dScroll, { passive: true });
+        dScroll();
     }
 })();
 </script>
