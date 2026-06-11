@@ -453,13 +453,36 @@ button { font-family: inherit; cursor: pointer; }
 .step h3 { font-size: 1.06rem; font-weight: 700; margin-bottom: 6px; }
 .step p { font-size: .93rem; color: var(--ink-2); }
 
-/* ─────────────── Specs (plain-language) ─────────────── */
-.specs { width: 100%; border-collapse: collapse; }
-.specs tr { border-bottom: 1px solid var(--line); }
-.specs tr:last-child { border-bottom: 0; }
-.specs th, .specs td { padding: 15px 8px; text-align: left; vertical-align: top; }
-.specs th { font-weight: 500; font-size: .95rem; color: var(--ink-3); width: 38%; }
-.specs td { font-weight: 600; font-size: .96rem; color: var(--ink); }
+/* ─────────────── Specs — 3×3 lattice grid ─────────────── */
+.spec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;                       /* hairlines via background show-through */
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+}
+.spec-cell {
+    background: #fff;
+    padding: 28px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.spec-k {
+    font-size: .76rem;
+    font-weight: 600;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+.spec-v {
+    font-size: 1.06rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--ink);
+}
 
 /* ─────────────── Privacy strip ─────────────── */
 .privacy { text-align: center; }
@@ -478,7 +501,15 @@ button { font-family: inherit; cursor: pointer; }
 .p-link:hover svg { transform: translateX(4px); }
 
 /* ─────────────── FAQ ─────────────── */
-.faq { width: 100%; }
+/* split layout: sticky heading left, accordion right — no dead space */
+.faq-grid {
+    display: grid;
+    grid-template-columns: .8fr 1.2fr;
+    gap: clamp(36px, 5vw, 80px);
+    align-items: start;
+}
+.faq-head { margin-bottom: 0; position: sticky; top: 96px; }
+.faq { border-top: 1px solid var(--line); }
 .faq details { border-bottom: 1px solid var(--line); }
 .faq summary {
     list-style: none;
@@ -499,7 +530,7 @@ button { font-family: inherit; cursor: pointer; }
 .faq summary .plus::after  { left: 7px; top: 0; width: 2px; height: 16px; }
 .faq details[open] summary .plus::after { transform: rotate(90deg); }
 .faq details[open] summary { color: var(--brand-deep); }
-.faq .answer { padding: 0 4px 22px; color: var(--ink-2); font-size: .95rem; max-width: 70ch; }
+.faq .answer { padding: 0 4px 22px; color: var(--ink-2); font-size: .95rem; }
 
 /* ─────────────── Final CTA ─────────────── */
 .final { text-align: center; }
@@ -535,13 +566,19 @@ button { font-family: inherit; cursor: pointer; }
     .hero-copy { text-align: center; }
     .hero .sub { margin-left: auto; margin-right: auto; }
     .stage { max-width: 680px; margin: 0 auto; }
+    .faq-grid { grid-template-columns: 1fr; }
+    .faq-head { position: static; margin-bottom: 30px; }
 }
 @media (max-width: 860px) {
     .grid, .steps { grid-template-columns: repeat(2, 1fr); }
+    .spec-grid { grid-template-columns: repeat(2, 1fr); }
+    .spec-grid .spec-cell:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 600px) {
     .grid, .steps { grid-template-columns: 1fr; }
     .bar-link.hide-sm { display: none; }
+    .spec-grid { grid-template-columns: 1fr; }
+    .spec-grid .spec-cell:last-child { grid-column: auto; }
 }
 /* small phones — shed secondary HUD chrome so nothing overlaps */
 @media (max-width: 520px) {
@@ -839,28 +876,27 @@ button { font-family: inherit; cursor: pointer; }
             <p>Everything worth knowing, without the jargon.</p>
         </header>
 
-        <table class="specs reveal">
-            <tbody>
-                <tr><th>Video quality</th><td>Up to Full HD (1080p)</td></tr>
-                <tr><th>Live view</th><td>Real-time — no perceptible delay</td></tr>
-                <tr><th>Recordings</th><td>MP4 video, plays anywhere</td></tr>
-                <tr><th>Screenshots</th><td>Full-quality images</td></tr>
-                <tr><th>Storage</th><td>Your gallery, or any folder you pick</td></tr>
-                <tr><th>Works with</th><td>Standard USB video devices</td></tr>
-                <tr><th>Requires</th><td>Android 8.0 or newer</td></tr>
-                <tr><th>Internet</th><td>Never — works fully offline</td></tr>
-                <tr><th>Price</th><td>Free</td></tr>
-            </tbody>
-        </table>
+        <div class="spec-grid reveal">
+            <div class="spec-cell"><span class="spec-k">Video quality</span><span class="spec-v">Up to Full HD (1080p)</span></div>
+            <div class="spec-cell"><span class="spec-k">Live view</span><span class="spec-v">Real-time — no perceptible delay</span></div>
+            <div class="spec-cell"><span class="spec-k">Recordings</span><span class="spec-v">MP4 video, plays anywhere</span></div>
+            <div class="spec-cell"><span class="spec-k">Screenshots</span><span class="spec-v">Full-quality images</span></div>
+            <div class="spec-cell"><span class="spec-k">Storage</span><span class="spec-v">Your gallery, or any folder you pick</span></div>
+            <div class="spec-cell"><span class="spec-k">Works with</span><span class="spec-v">Standard USB video devices</span></div>
+            <div class="spec-cell"><span class="spec-k">Requires</span><span class="spec-v">Android 8.0 or newer</span></div>
+            <div class="spec-cell"><span class="spec-k">Internet</span><span class="spec-v">Never — works fully offline</span></div>
+            <div class="spec-cell"><span class="spec-k">Price</span><span class="spec-v">Free</span></div>
+        </div>
     </div>
 </section>
 
 <!-- ═════════ FAQ ═════════ -->
 <section id="faq" class="section soft">
-    <div class="wrap">
-        <header class="sec-head">
+    <div class="wrap faq-grid">
+        <header class="sec-head faq-head">
             <p class="eyebrow">FAQ</p>
             <h2>Questions, answered.</h2>
+            <p>What pilots usually ask before the first flight.</p>
         </header>
 
         <div class="faq">
